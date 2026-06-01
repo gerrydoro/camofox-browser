@@ -1,0 +1,15 @@
+[Unit]
+Description=Camofox Browser service
+After=network.target
+Wants=network-online.target
+ReloadPropagatedFrom=systemd-networkd-wait-online.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+ExecStart=/run/current-system/sw/bin/node /home/gerardo/MyStuff/camofox-browser/server.js
+WorkingDirectory=/home/gerardo/MyStuff/camofox-browser
+
+[Install]
+WantedBy=multi-user.target

@@ -12,60 +12,43 @@
       nixpkgs,
       flake-utils,
     }:
-    flake-utils.lib.eachDefaultSystem (
+    flake-utils.lib.eachSystem [ "x86_64-linux" ] (
       system:
       let
         pkgs = nixpkgs.legacyPackages."${system}";
-
-        # System dependencies from Dockerfile
-        camofox-deps = with pkgs; [
-          gtk3
-          dbus-glib
-          libxt6
-          alsa-lib
-          libx11-xcb
-          libxcomposite
-          libxcursor
-          libxdamage
-          libxfixes
-          libxi
-          libxrandr
-          libxrender
-          libxss
-          libxtst
-          mesa
-          libglvnd
-          libgbm
-          xorg.xorgserver
-          xvfb
-          liberation-ttf
-          noto-fonts-emoji
-          freefont-ttf
-          cacert
-          curl
-          unzip
-          python3
-          x11vnc
-          novnc
-          websockify
-          nettools
-          procps
-        ];
+        version = "1.11.2";
+        camofox-browser = pkgs.stdenv.mkDerivation {
+          pname = "camofox-browser";
+          inherit version;
+          src = ./.;
+          nativeBuildInputs = with pkgs; [
+            nodejs
+            npm
+          ];
+          buildInputs = with pkgs; [ ];
+          buildPhase = ''
+            runHook preBuild
+            export HOME=$(mktemp -d)
+            npm install --production
+            runHook postBuild
+          '';
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out/lib/camofox-browser
+            cp -r . $out/lib/camofox-browser/camofox-browser
+            runHook postInstall
+          '';
+          meta = {
+            description = "Headless browser automation server and OpenClaw plugin for AI agents";
+            homepage = "https://github.com/jo-inc/camofox-browser";
+            license = licenses.mit;
+            maintainers = with maintainers; [ ];
+            mainProgram = "camofox-browser";
+          };
+        };
       in
       {
-        devShells.default = pkgs.mkShell {
-          buildInputs = [
-            pkgs.nodejs
-            pkgs.npm
-          ]
-          ++ camofox-deps;
-
-          shellHook = ''
-            echo "Camofox Browser development environment"
-            echo "To start the server, run: npm start"
-            echo "To run tests, run: npm test"
-          '';
-        };
+        packages.camofox-browser = camofox-browser;
       }
     );
 }
